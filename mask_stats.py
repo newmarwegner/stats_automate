@@ -6,6 +6,11 @@ import rasterio
 from rasterstats import zonal_stats
 
 def open_boundary(limit):
+    """
+    Function to read a geopackage
+    :param limit: To define if open municipios or subbacias
+    :return: boundaries as geopandas dataframe
+    """
     if limit == 'municipios':
         boundaries = gpd.read_file('./inputs/municipios.gpkg', encoding='utf-8')
     else:
@@ -15,6 +20,11 @@ def open_boundary(limit):
 
 
 def list_limits(limit):
+    """
+    Function to get a list of names limits
+    :param limit: To define if open municipios or subbacias
+    :return: List of unique names in field limite on geodataframe
+    """
     boundary = open_boundary(limit)
     bound_list = sorted(list(set(v['limite'] for k, v in boundary.iterrows())))
 
@@ -22,6 +32,11 @@ def list_limits(limit):
 
 
 def calc_area_pixel(raster_path):
+    """
+    Function to calc area using pixel (area considering side * side). Attention with SRC!
+    :param raster_path: path of raster to be used
+    :return: area per pixel
+    """
     raster = rasterio.open(raster_path)
     xsize = abs(raster.profile['transform'][0])
     ysize = abs(raster.profile['transform'][4])
@@ -30,8 +45,13 @@ def calc_area_pixel(raster_path):
 
 
 def stats_landuse(limit):
+    """
+    Function to get landuse stats considering raster with name uso.tif on /uso_solo
+    :param limit: To define if open municipios or subbacias
+    :return: Stats with total area in each class calculated
+    """
     bound_list, boundary = list_limits(limit)
-    raster_path = './uso_solo/uso.tif'
+    raster_path = 'uso_solo/uso.tif'
     area_pixel = calc_area_pixel(raster_path)
     pixels_count = []
     for i in bound_list:
@@ -49,6 +69,11 @@ def stats_landuse(limit):
 
 
 def landuse_to_geopackage(limit):
+    """
+    Function to join result of stats and limits of polygons to export in geopackage
+    :param limit: To define if open municipios or subbacias
+    :return: Geopackage with stats in each polygons and with multiple columns
+    """
     stats = stats_landuse(limit)
     data = []
     for i in stats:
@@ -69,10 +94,21 @@ def landuse_to_geopackage(limit):
 
 
 def paths_tiffs(variable):
+    """
+    Function to get a list with all paths rasters in folders considering variable precipitacao or temperatura
+    :param variable: Define precipitacao or temperatura to look inside this folder
+    :return: List with paths tiffs
+    """
     return sorted(glob.glob(os.path.join(os.getcwd(), f'{variable}/') + "*.tif"))
 
 
 def stats_prec_temp(limit, variable):
+    """
+    Function to calc stats of temperatura or precipitacao for each polygon
+    :param limit: To define if open municipios or subbacias
+    :param variable: To define which folder will be use to get stats precipatacao (mean anual) or temperatura (max anual)
+    :return: Geopackage with stats merged
+    """
     limits, boundaries = list_limits(limit)
     boundaries = boundaries.to_crs(4326)
     raster_paths = paths_tiffs(variable)

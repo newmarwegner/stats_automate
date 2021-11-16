@@ -1,6 +1,7 @@
 /outputs
 /precipitacao
 /temperatura
+/vulnerabilidade
 /uso_solo
 .venv
 .idea/
